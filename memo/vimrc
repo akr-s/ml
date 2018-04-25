@@ -1,0 +1,88 @@
+"set nocompatible
+"filetype off
+
+"if has('vim_starting')
+set runtimepath+=~/.vim/bundle/neobundle.vim/
+call neobundle#begin(expand('~/.vim/bundle/')) 
+"call neobundle#rc(expand('~/.vim/bundle/'))
+"endif
+
+NeoBundleFetch 'Shougo/neobundle.vim'
+NeoBundle 'scrooloose/nerdtree'
+NeoBundle 'grep.vim'
+NeoBundle 'thinca/vim-template'
+NeoBundle 'davidhalter/jedi-vim'
+NeoBundle 'scrooloose/syntastic'
+"NeoBundle 'git://github.com/Shougo/clang_complete.git'
+"NeoBundle 'git://github.com/Shougo/echodoc.git'
+"NeoBundle 'git://github.com/Shougo/neocomplcache.git'
+"NeoBundle 'git://github.com/Shougo/neobundle.vim.git'
+"NeoBundle 'git://github.com/Shougo/unite.vim.git'
+"NeoBundle 'git://github.com/Shougo/vim-vcs.git'
+"NeoBundle 'git://github.com/Shougo/vimfiler.git'
+"NeoBundle 'git://github.com/Shougo/vimshell.git'
+"NeoBundle 'git://github.com/Shougo/vinarise.git'
+
+call neobundle#end()
+
+filetype plugin on
+filetype indent on
+
+NeoBundleCheck
+
+"let g:syntastic_python_checkers = ['pyflakes', 'pep8']
+
+" ref:http://pikesaku.hatenablog.com/entry/2016/08/21/164328
+"autopep 
+" original http://stackoverflow.com/questions/12374200/using-uncrustify-with-vim/15513829#15513829
+function! Preserve(command)
+    " Save the last search.
+    let search = @/
+    " Save the current cursor position.
+    let cursor_position = getpos('.')
+    " Save the current window position.
+    normal! H
+    let window_position = getpos('.')
+    call setpos('.', cursor_position)
+    " Execute the command.
+    execute a:command
+    " Restore the last search.
+    let @/ = search
+    " Restore the previous window position.
+    call setpos('.', window_position)
+    normal! zt
+    " Restore the previous cursor position.
+    call setpos('.', cursor_position)
+endfunction
+
+function! Autopep8()
+    "--ignote=E501: 一行の長さの補正を無視"
+    call Preserve(':silent %!autopep8 --ignore=E501 -')
+endfunction
+
+" Shift + F でautopep自動修正
+nnoremap <S-f> :call Autopep8()<CR>
+
+" F5で編集しているファイルを実行（python用）
+nmap <F5> :!python %
+
+" コピペの際にインデントしないように、自動でペーストモードにする。
+" ref: http://qiita.com/ryoff/items/ad34584e41425362453e
+if &term =~ "xterm"
+    let &t_ti .= "\e[?2004h"
+    let &t_te .= "\e[?2004l"
+    let &pastetoggle = "\e[201~"
+
+    function XTermPasteBegin(ret)
+        set paste
+        return a:ret
+    endfunction
+
+    noremap <special> <expr> <Esc>[200~ XTermPasteBegin("0i")
+    inoremap <special> <expr> <Esc>[200~ XTermPasteBegin("")
+    cnoremap <special> <Esc>[200~ <nop>
+    cnoremap <special> <Esc>[201~ <nop>
+endif
+
+" 行末のスペースを削除する
+autocmd BufWritePre * :%s/\s\+$//ge
